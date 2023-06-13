@@ -8,7 +8,7 @@ import subprocess
 import time
 import os 
 
-host = ('localhost', 8000) # 접속 정보 (수정x)
+host = ('localhost', 80) # 접속 정보 (수정x)
 status = False # 기본 상태 (수정x)
 daemon = '' # 데몬정보 입력
 
@@ -21,6 +21,9 @@ class MyHandler(BaseHTTPRequestHandler):
             response = "User-agent: *\nDisallow: /"
             self.wfile.write(response.encode())
         elif self.path == '/':
+            self.send_response(401)
+            self.end_headers()
+        elif self.path == '/API/daemon-status':
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -42,8 +45,10 @@ def check_sta_process():
         if int(statusProc) == 0:
             status = False
             os.system(daemon) # 실행할 데몬
+            print '실행되지 아니함'
         else:
             status = True
+            print '정상 실행중'
         
         time.sleep(60)  # 1분 대기
 
@@ -52,9 +57,10 @@ process_thread = threading.Thread(target=check_sta_process)
 process_thread.start()
 
 def run(server_class=HTTPServer, handler_class=MyHandler):
-    server_address = ('', 8000)
+    server_address = ('', 80)
     httpd = server_class(server_address, handler_class)
     httpd.serve_forever()
+    print '서비스를 시작합니다'
 
 if __name__ == '__main__':
     run()
